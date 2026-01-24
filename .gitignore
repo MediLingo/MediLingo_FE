@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor local override (per-developer)
+capacitor.config.local.json

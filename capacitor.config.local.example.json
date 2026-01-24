@@ -1,0 +1,6 @@
+{
+    "server": {
+      "url": "http://<YOUR_LAN_IP>:5173",
+      "cleartext": true
+    }
+  }
