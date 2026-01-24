@@ -1,0 +1,7 @@
+{
+  "name": "MediLingo",
+  "description": "여행 중 현지 약 찾기 필수 앱. 한국 약이나 증상을 입력하면 현지 약으로 찾아줍니다.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
