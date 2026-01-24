@@ -1,3 +1,10 @@
+## 목차
+- [⭐️ 중요 ⭐️](#important)
+- [📌 로컬에서 실행하기](#local-web)
+- [📌 macOS에서 iOS 시뮬레이터 앱 실행하기 (Capacitor)](#ios-sim)
+- [📌 Windows에서 Android 에뮬레이터 앱 실행하기 (Capacitor)](#android-emu)
+
+<a id="important"></a>
 ## ⭐️ 중요 ⭐️
 
 실제 iPhone/Android **실기기에서 dev 서버로 접속하려면 반드시 PC/Mac과 같은 Wi‑Fi에 연결**되어 있어야 합니다.
@@ -38,7 +45,8 @@ npx cap open android
 - `capacitor.config.ts` : 공용 설정(커밋 O)
 - `capacitor.config.local.json` : 개인별 dev server URL(커밋 X)
 
-## 로컬에서 실행하기 (웹)
+<a id="local-web"></a>
+## 📌 로컬에서 실행하기 (웹)
 
 ### 1) 의존성 설치
 ```bash
@@ -59,7 +67,8 @@ npm run dev
 
 ---
 
-## macOS에서 iOS 시뮬레이터 앱 실행하기 (Capacitor)
+<a id="ios-sim"></a>
+## 📌 macOS에서 iOS 시뮬레이터 앱 실행하기 (Capacitor)
 
 **필수 사항 (macOS 전용)**
 - Xcode (iOS 시뮬레이터/빌드에 필요)
@@ -118,7 +127,8 @@ npx cap open ios
 
 ---
 
-## Windows에서 Android 에뮬레이터 앱 실행하기 (Capacitor)
+<a id="android-emu"></a>
+## 📌 Windows에서 Android 에뮬레이터 앱 실행하기 (Capacitor)
 
 **필수 사항**
 - Android Studio (Android SDK 포함)
