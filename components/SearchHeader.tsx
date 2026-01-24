@@ -4,10 +4,11 @@ import { Search, MapPin, Camera, X, Loader2 } from 'lucide-react';
 
 interface SearchHeaderProps {
   onSearch: (params: SearchState) => void;
+  onReset: () => void;
   isLoading: boolean;
 }
 
-const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, isLoading }) => {
+const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading }) => {
   const [homeCountry, setHomeCountry] = useState('KR');
   const [targetCountry, setTargetCountry] = useState('JP');
   const [query, setQuery] = useState('');
@@ -24,6 +25,13 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, isLoading }) => {
       query,
       image: previewImage
     });
+  };
+
+  const handleLogoClick = () => {
+    setQuery('');
+    setPreviewImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    onReset();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,12 +54,12 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, isLoading }) => {
     <div className="bg-blue-600 text-white pb-6 pt-4 px-4 shadow-lg sticky top-0 z-50 rounded-b-3xl">
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 
+            onClick={handleLogoClick}
+            className="text-2xl font-bold flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <span className="text-3xl">💊</span> MediLingo
           </h1>
-          <div className="text-xs bg-blue-500 px-2 py-1 rounded-full">
-            여행 필수품
-          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">

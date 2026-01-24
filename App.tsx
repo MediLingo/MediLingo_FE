@@ -32,9 +32,15 @@ const App: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    setResult(null);
+    setError(null);
+    setLastSearch(null);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <SearchHeader onSearch={handleSearch} isLoading={loading} />
+      <SearchHeader onSearch={handleSearch} onReset={handleReset} isLoading={loading} />
 
       <main className="flex-grow p-4 max-w-md mx-auto w-full">
         {error && (
