@@ -14,6 +14,42 @@ Prioritize safety. If a prescription is likely required, state that clearly.
 Output ONLY strictly structured JSON.
 `;
 
+const MOCK_RESULT: SearchResult = {
+  medicines: [
+    {
+      name: "EVE Quick DX",
+      localName: "イブクイック頭痛薬DX",
+      manufacturer: "SS Pharmaceutical",
+      description: "두통과 열에 빠른 효과를 보이는 진통제입니다. 위 점막을 보호하는 성분이 포함되어 있습니다.",
+      ingredients: ["Ibuprofen 200mg", "Magnesium Oxide"],
+      usage: "성인 1회 2정, 1일 2회 한도, 식후 복용 권장",
+      matchReason: "한국의 '이지엔6'나 '탁센'과 유사한 이부프로펜 계열의 강력한 진통제입니다.",
+      type: "pill"
+    },
+    {
+      name: "Ohta's Isan",
+      localName: "太田胃散",
+      manufacturer: "Ohta's Isan Co.",
+      description: "과식, 과음, 속쓰림에 효과적인 종합 위장약입니다. 생약 성분이 포함되어 향이 독특할 수 있습니다.",
+      ingredients: ["Cinnamon bark", "Fennel", "Nutmeg", "Sodium Bicarbonate"],
+      usage: "성인 1회 1스푼(동봉), 1일 3회 식후 또는 식간",
+      matchReason: "한국의 '까스활명수'나 가루형 위장약과 유사한 용도로 쓰이는 현지 국민 위장약입니다.",
+      type: "liquid" // Actually powder usually, but mapping to valid type or closest visual
+    },
+    {
+      name: "Roihi Tsuboko",
+      localName: "ロイヒつぼ膏",
+      manufacturer: "Nichiban",
+      description: "어깨 결림이나 허리 통증 부위에 붙이는 동전 모양의 온감 파스입니다.",
+      ingredients: ["Methyl Salicylate", "Menthol", "Camphor"],
+      usage: "통증이 있는 부위(경혈)에 직접 부착",
+      matchReason: "근육통 완화에 효과적이며 여행 선물로도 인기 있는 제품입니다.",
+      type: "patch"
+    }
+  ],
+  advice: "[더미 데이터] 현재 API 연결이 되어 있지 않아 예시 데이터를 보여드립니다. 실제 서비스에서는 증상에 맞는 현지 약품이 추천됩니다. 약 구매 전 번역된 이름(localName)을 약사에게 보여주세요."
+};
+
 export const findMedicine = async (
   homeCountry: string,
   targetCountry: string,
@@ -21,6 +57,13 @@ export const findMedicine = async (
   imageBase64?: string | null
 ): Promise<SearchResult> => {
   
+  // Check if API Key is missing, return mock data immediately with a delay
+  if (!process.env.API_KEY) {
+    console.warn("API Key missing. Returning mock data.");
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+    return MOCK_RESULT;
+  }
+
   const model = "gemini-3-flash-preview";
 
   // Define the output schema
@@ -110,7 +153,9 @@ export const findMedicine = async (
     return JSON.parse(text) as SearchResult;
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    throw error;
+    console.error("Gemini API Error, falling back to mock data:", error);
+    // Fallback to mock data on error as well, for better demo experience
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return MOCK_RESULT;
   }
 };
