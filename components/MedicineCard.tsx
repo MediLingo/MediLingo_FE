@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Medicine } from '../types';
 import { Pill, Droplets, SprayCan as Spray, Info, Check, ChevronDown, ChevronUp } from 'lucide-react';
@@ -18,9 +19,10 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank }) => {
     }
   };
 
-  // Generate a distinct placeholder based on name length to vary images slightly
-  const imageId = (medicine.name.length * 7) % 50 + 10;
-  const imageUrl = `https://picsum.photos/300/200?random=${imageId}`;
+  // Use provided imageUrl or fallback to a placeholder
+  const imageUrl = medicine.imageUrl 
+    ? medicine.imageUrl 
+    : `https://picsum.photos/300/200?random=${(medicine.name.length * 7) % 50 + 10}`;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4 transition-all hover:shadow-md">
@@ -60,7 +62,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank }) => {
              <img 
               src={imageUrl} 
               alt={medicine.name} 
-              className="w-full h-40 object-cover rounded-lg mb-4"
+              className="w-full h-80 object-cover rounded-lg mb-4 bg-slate-200"
             />
             
             <div className="grid grid-cols-1 gap-4">

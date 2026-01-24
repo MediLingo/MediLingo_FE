@@ -1,3 +1,4 @@
+
 export interface Medicine {
   name: string;
   localName: string; // The name in the target country's language
@@ -7,6 +8,7 @@ export interface Medicine {
   usage: string;
   matchReason: string; // Why is this a match?
   type: 'pill' | 'liquid' | 'cream' | 'patch' | 'other';
+  imageUrl?: string; // Added to support API provided images
 }
 
 export interface SearchState {

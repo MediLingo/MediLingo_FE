@@ -1,161 +1,147 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { SearchResult } from "../types";
 
-// Initialize Gemini Client
-// Assumption: process.env.API_KEY is available in the environment
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { SearchResult, Medicine } from "../types";
 
-const SYSTEM_INSTRUCTION = `
-You are an expert pharmacist and travel medical assistant. 
-Your goal is to help travelers find equivalent Over-The-Counter (OTC) medicines in a foreign country.
-The user will provide their home country, a target country, and a query (which could be a medicine name from their home country or a symptom).
-You must analyze the active ingredients and effects to recommend the best local matching medicines in the target country.
-Prioritize safety. If a prescription is likely required, state that clearly.
-Output ONLY strictly structured JSON.
-`;
+// Define the API Response structure based on the requirements
+interface ApiLocalProduct {
+  name: string;
+  imageUrl: string;
+  source: string;
+  // Optional fields for mock data to keep UI rich
+  description?: string;
+  usage?: string;
+  type?: 'pill' | 'liquid' | 'cream' | 'patch' | 'other';
+  manufacturer?: string;
+}
 
-const MOCK_RESULT: SearchResult = {
-  medicines: [
-    {
-      name: "EVE Quick DX",
-      localName: "イブクイック頭痛薬DX",
-      manufacturer: "SS Pharmaceutical",
-      description: "두통과 열에 빠른 효과를 보이는 진통제입니다. 위 점막을 보호하는 성분이 포함되어 있습니다.",
-      ingredients: ["Ibuprofen 200mg", "Magnesium Oxide"],
-      usage: "성인 1회 2정, 1일 2회 한도, 식후 복용 권장",
-      matchReason: "한국의 '이지엔6'나 '탁센'과 유사한 이부프로펜 계열의 강력한 진통제입니다.",
-      type: "pill"
+interface ApiResponseData {
+  normalized: {
+    activeIngredient: string;
+    dose: string;
+    form: string;
+    notes: string;
+  };
+  localProducts: ApiLocalProduct[];
+  disclaimer: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: ApiResponseData;
+  error: string | null;
+}
+
+// Mock Data following the requested structure
+const MOCK_API_RESPONSE: ApiResponse = {
+  success: true,
+  data: {
+    normalized: {
+      activeIngredient: "Ibuprofen",
+      dose: "200mg",
+      form: "tablet",
+      notes: "두통, 생리통, 치통 등 통증 완화 및 해열 작용"
     },
-    {
-      name: "Ohta's Isan",
-      localName: "太田胃散",
-      manufacturer: "Ohta's Isan Co.",
-      description: "과식, 과음, 속쓰림에 효과적인 종합 위장약입니다. 생약 성분이 포함되어 향이 독특할 수 있습니다.",
-      ingredients: ["Cinnamon bark", "Fennel", "Nutmeg", "Sodium Bicarbonate"],
-      usage: "성인 1회 1스푼(동봉), 1일 3회 식후 또는 식간",
-      matchReason: "한국의 '까스활명수'나 가루형 위장약과 유사한 용도로 쓰이는 현지 국민 위장약입니다.",
-      type: "liquid" // Actually powder usually, but mapping to valid type or closest visual
-    },
-    {
-      name: "Roihi Tsuboko",
-      localName: "ロイヒつぼ膏",
-      manufacturer: "Nichiban",
-      description: "어깨 결림이나 허리 통증 부위에 붙이는 동전 모양의 온감 파스입니다.",
-      ingredients: ["Methyl Salicylate", "Menthol", "Camphor"],
-      usage: "통증이 있는 부위(경혈)에 직접 부착",
-      matchReason: "근육통 완화에 효과적이며 여행 선물로도 인기 있는 제품입니다.",
-      type: "patch"
-    }
-  ],
-  advice: "[더미 데이터] 현재 API 연결이 되어 있지 않아 예시 데이터를 보여드립니다. 실제 서비스에서는 증상에 맞는 현지 약품이 추천됩니다. 약 구매 전 번역된 이름(localName)을 약사에게 보여주세요."
+    localProducts: [
+      {
+        name: "EVE A (イブA錠)",
+        imageUrl: "https://image.dokodemo.world/catalog-skus/1078712/f05e55504d720eb0a86ed4c0bb71c5ee.png?d=1000x0",
+        source: "seed",
+        description: "일본의 대표적인 진통제로, 이부프로펜과 진정 성분이 배합되어 있습니다.",
+        usage: "성인 1회 2정, 1일 3회 한도",
+        type: "pill",
+        manufacturer: "SS Pharmaceutical"
+      },
+      {
+        name: "Bufferin Premium (バファリン)",
+        imageUrl: "https://doc.lion.co.jp/uploads/grn/product/normal_image/188/bufferin_premium20.png",
+        source: "seed",
+        description: "빠른 효과와 위장 보호 성분이 특징인 프리미엄 진통제입니다.",
+        usage: "식후 2정 복용",
+        type: "pill",
+        manufacturer: "Lion Corp"
+      },
+      {
+        name: "Loxonin S (ロキソニンS)",
+        imageUrl: "https://www.daiichisankyo-hc.co.jp/library/content/img_library/image/loxonin-s_CF005_main.jpg",
+        source: "seed",
+        description: "강력한 소염 진통 효과를 가진 로키소프로펜 성분의 약입니다.",
+        usage: "증상이 있을 때 1정 복용",
+        type: "pill",
+        manufacturer: "Daiichi Sankyo"
+      }
+    ],
+    disclaimer: "현지 성분/용량은 국가별로 다를 수 있어요. 복용 전 라벨 확인 및 약사/의사 상담을 권장합니다."
+  },
+  error: null
 };
 
 export const findMedicine = async (
-  homeCountry: string,
+  homeCountry: string, // Not used in API payload example but kept for interface consistency
   targetCountry: string,
   query: string,
   imageBase64?: string | null
 ): Promise<SearchResult> => {
   
-  // Check if API Key is missing, return mock data immediately with a delay
-  if (!process.env.API_KEY) {
-    console.warn("API Key missing. Returning mock data.");
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    return MOCK_RESULT;
-  }
-
-  const model = "gemini-3-flash-preview";
-
-  // Define the output schema
-  const responseSchema = {
-    type: Type.OBJECT,
-    properties: {
-      medicines: {
-        type: Type.ARRAY,
-        description: "List of recommended medicines in the target country",
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING, description: "English or Romanized name of the medicine" },
-            localName: { type: Type.STRING, description: "Name in the local script (e.g., Katakana for Japan)" },
-            manufacturer: { type: Type.STRING, description: "Brand or manufacturer" },
-            description: { type: Type.STRING, description: "Brief description of what it treats in Korean" },
-            ingredients: { 
-              type: Type.ARRAY, 
-              items: { type: Type.STRING },
-              description: "Active ingredients"
-            },
-            usage: { type: Type.STRING, description: "Simple dosage instruction in Korean (e.g., 식후 2알)" },
-            matchReason: { type: Type.STRING, description: "Why this fits the user's request in Korean" },
-            type: { type: Type.STRING, enum: ['pill', 'liquid', 'cream', 'patch', 'other'] }
-          },
-          required: ["name", "localName", "description", "usage", "matchReason", "type"]
-        }
-      },
-      advice: {
-        type: Type.STRING,
-        description: "General medical advice or warnings for this specific query in the target country in Korean."
-      }
-    },
-    required: ["medicines", "advice"]
-  };
-
+  // API Call Simulation
   try {
-    const promptText = `
-      I am from ${homeCountry} and currently traveling in ${targetCountry}.
-      My search query is: "${query}".
-      Find me the top 3-5 equivalent or most suitable OTC medicines available in ${targetCountry}.
-      If I provided a medicine name, find the closest ingredient match.
-      If I provided a symptom, find the best standard treatment.
-      Provide the local name so I can show it to a pharmacist.
-      
-      IMPORTANT: 
-      - Return the 'description', 'usage', 'matchReason', and 'advice' in KOREAN.
-      - Keep the medicine 'name' and 'manufacturer' in their original language (English/Local) so it can be identified.
-    `;
+    // Construct the request body as specified
+    const requestBody = {
+        koreanDrugText: query,
+        countryCode: targetCountry
+    };
 
-    let contents: any = promptText;
+    console.log("Calling API: /api/drug/translate with", requestBody);
 
-    // If an image is provided (e.g. photo of a pill box), add it to the prompt
-    if (imageBase64) {
-      // Remove data URI prefix if present for the API call
-      const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
-      
-      contents = {
-        parts: [
-          { text: promptText },
-          {
-            inlineData: {
-              mimeType: "image/jpeg", // Assuming JPEG for simplicity from capture, standardizing in component
-              data: cleanBase64
-            }
-          }
-        ]
-      };
-    }
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-        temperature: 0.4, // Keep it factual
-      }
+    // TODO: Uncomment this when the real API is ready
+    /*
+    const response = await fetch('/api/drug/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
     });
 
-    const text = response.text;
-    if (!text) {
-      throw new Error("AI 응답을 받을 수 없습니다.");
+    if (!response.ok) {
+      throw new Error('API request failed');
     }
 
-    return JSON.parse(text) as SearchResult;
+    const json: ApiResponse = await response.json();
+    return mapApiResponseToSearchResult(json);
+    */
+
+    // Simulate Network Delay for Mock
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return Mock Data
+    return mapApiResponseToSearchResult(MOCK_API_RESPONSE);
 
   } catch (error) {
-    console.error("Gemini API Error, falling back to mock data:", error);
-    // Fallback to mock data on error as well, for better demo experience
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return MOCK_RESULT;
+    console.error("API Error:", error);
+    // Fallback to mock even on error
+    return mapApiResponseToSearchResult(MOCK_API_RESPONSE);
   }
 };
+
+// Helper to convert the new API structure to the existing UI State
+function mapApiResponseToSearchResult(apiResponse: ApiResponse): SearchResult {
+  const { normalized, localProducts, disclaimer } = apiResponse.data;
+
+  const medicines: Medicine[] = localProducts.map(product => ({
+    name: product.name,
+    // Since API sends combined name or just English, use it for both unless we split it manually
+    localName: product.name, 
+    manufacturer: product.manufacturer || "Unknown Manufacturer",
+    // Use data from API or fallback to normalized notes
+    description: product.description || `성분: ${normalized.activeIngredient} (${normalized.notes})`,
+    ingredients: [normalized.activeIngredient], // The API gives normalized ingredient
+    usage: product.usage || "약사의 지시에 따르세요.",
+    matchReason: normalized.notes || "성분이 유사한 약품입니다.",
+    type: product.type || 'other',
+    imageUrl: product.imageUrl
+  }));
+
+  return {
+    medicines,
+    advice: disclaimer
+  };
+}
