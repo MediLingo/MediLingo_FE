@@ -3,7 +3,7 @@ import SearchHeader from './components/SearchHeader';
 import MedicineCard from './components/MedicineCard';
 import { findMedicine } from './services/geminiService';
 import { SearchResult, SearchState } from './types';
-import { AlertTriangle, Info, Globe, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Info, Globe, ShieldCheck, Thermometer, Pill } from 'lucide-react';
 
 const App: React.FC = () => {
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -22,7 +22,8 @@ const App: React.FC = () => {
         params.homeCountry,
         params.targetCountry,
         params.query,
-        params.image
+        params.image,
+        params.searchType
       );
       setResult(data);
     } catch (err: any) {
@@ -57,17 +58,17 @@ const App: React.FC = () => {
             </div>
             <h2 className="text-lg font-semibold text-slate-600 mb-2">안전한 여행을 위한 메디링고</h2>
             <p className="text-sm max-w-xs mx-auto">
-              평소 드시던 약 이름이나 현재 증상을 입력하면, 현지 약국에서 구매 가능한 약을 찾아드립니다.
+              위의 탭을 눌러 <strong>약 이름</strong> 혹은 <strong>증상</strong>으로<br/>현지 약을 검색해보세요.
             </p>
             
             <div className="mt-8 grid grid-cols-2 gap-4">
-               <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                  <span className="text-2xl mb-2 block">🤒</span>
-                  <div className="text-xs font-bold text-slate-700">증상 검색</div>
+               <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
+                  <Thermometer className="text-blue-500 w-8 h-8 mb-2" />
+                  <div className="text-xs font-bold text-slate-700">"배가 너무 아파요"</div>
                </div>
-               <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                  <span className="text-2xl mb-2 block">💊</span>
-                  <div className="text-xs font-bold text-slate-700">약 사진 검색</div>
+               <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
+                  <Pill className="text-purple-500 w-8 h-8 mb-2" />
+                  <div className="text-xs font-bold text-slate-700">"타이레놀 찾아줘"</div>
                </div>
             </div>
           </div>
@@ -79,11 +80,18 @@ const App: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-800">
                 검색 결과 {result.medicines.length}건
               </h2>
-              {lastSearch && (
-                <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">
-                  {lastSearch.targetCountry}
-                </span>
-              )}
+              <div className="flex gap-2">
+                {lastSearch && (
+                  <>
+                    <span className="text-xs font-medium px-2 py-1 bg-slate-200 text-slate-700 rounded-lg">
+                      {lastSearch.searchType === 'drug' ? '약 이름' : '증상'}
+                    </span>
+                    <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">
+                      {lastSearch.targetCountry}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* AI Advice Card */}

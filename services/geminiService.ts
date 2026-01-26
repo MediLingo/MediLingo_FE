@@ -1,5 +1,5 @@
 
-import { SearchResult, Medicine } from "../types";
+import { SearchResult, Medicine, SearchType } from "../types";
 
 // Define the API Response structure based on the requirements
 interface ApiLocalProduct {
@@ -30,8 +30,8 @@ interface ApiResponse {
   error: string | null;
 }
 
-// Mock Data following the requested structure
-const MOCK_API_RESPONSE: ApiResponse = {
+// Mock Data for Drug Search (e.g. Tylenol, EVE)
+const MOCK_DRUG_RESPONSE: ApiResponse = {
   success: true,
   data: {
     normalized: {
@@ -74,26 +74,87 @@ const MOCK_API_RESPONSE: ApiResponse = {
   error: null
 };
 
+// Mock Data for Symptom Search (e.g. Stomach ache)
+const MOCK_SYMPTOM_RESPONSE: ApiResponse = {
+  success: true,
+  data: {
+    normalized: {
+      activeIngredient: "Digestive Enzymes",
+      dose: "N/A",
+      form: "powder/tablet",
+      notes: "소화불량, 과식, 위통 증상 완화"
+    },
+    localProducts: [
+      {
+        name: "EVE A (イブA錠)",
+        imageUrl: "https://image.dokodemo.world/catalog-skus/1078712/f05e55504d720eb0a86ed4c0bb71c5ee.png?d=1000x0",
+        source: "seed",
+        description: "일본의 대표적인 진통제로, 이부프로펜과 진정 성분이 배합되어 있습니다.",
+        usage: "성인 1회 2정, 1일 3회 한도",
+        type: "pill",
+        manufacturer: "SS Pharmaceutical"
+      },
+      {
+        name: "Bufferin Premium (バファリン)",
+        imageUrl: "https://doc.lion.co.jp/uploads/grn/product/normal_image/188/bufferin_premium20.png",
+        source: "seed",
+        description: "빠른 효과와 위장 보호 성분이 특징인 프리미엄 진통제입니다.",
+        usage: "식후 2정 복용",
+        type: "pill",
+        manufacturer: "Lion Corp"
+      },
+      {
+        name: "Loxonin S (ロキソニンS)",
+        imageUrl: "https://www.daiichisankyo-hc.co.jp/library/content/img_library/image/loxonin-s_CF005_main.jpg",
+        source: "seed",
+        description: "강력한 소염 진통 효과를 가진 로키소프로펜 성분의 약입니다.",
+        usage: "증상이 있을 때 1정 복용",
+        type: "pill",
+        manufacturer: "Daiichi Sankyo"
+      }
+    ],
+    disclaimer: "증상 기반 추천은 참고용입니다. 지속적인 통증은 반드시 의사와 상담하세요."
+  },
+  error: null
+};
+
+
 export const findMedicine = async (
   homeCountry: string, // Not used in API payload example but kept for interface consistency
   targetCountry: string,
   query: string,
-  imageBase64?: string | null
+  imageBase64: string | null,
+  searchType: SearchType
 ): Promise<SearchResult> => {
   
   // API Call Simulation
   try {
-    // Construct the request body as specified
-    const requestBody = {
+    let apiEndpoint = '';
+    let requestBody = {};
+    let mockDataToReturn = MOCK_DRUG_RESPONSE;
+
+    if (searchType === 'drug') {
+      apiEndpoint = '/api/drug/translate';
+      requestBody = {
         koreanDrugText: query,
         countryCode: targetCountry
-    };
+      };
+      mockDataToReturn = MOCK_DRUG_RESPONSE;
+    } else {
+      // Logic for Symptom Search
+      apiEndpoint = '/api/drug/diagnose';
+      requestBody = {
+        symptomText: query,
+        countryCode: targetCountry
+      };
+      mockDataToReturn = MOCK_SYMPTOM_RESPONSE;
+    }
 
-    console.log("Calling API: /api/drug/translate with", requestBody);
+    console.log(`Calling API: ${apiEndpoint} with`, requestBody);
 
     // TODO: Uncomment this when the real API is ready
     /*
-    const response = await fetch('/api/drug/translate', {
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,13 +173,13 @@ export const findMedicine = async (
     // Simulate Network Delay for Mock
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Return Mock Data
-    return mapApiResponseToSearchResult(MOCK_API_RESPONSE);
+    // Return appropriate Mock Data based on search type
+    return mapApiResponseToSearchResult(mockDataToReturn);
 
   } catch (error) {
     console.error("API Error:", error);
     // Fallback to mock even on error
-    return mapApiResponseToSearchResult(MOCK_API_RESPONSE);
+    return mapApiResponseToSearchResult(MOCK_DRUG_RESPONSE);
   }
 };
 
@@ -135,7 +196,7 @@ function mapApiResponseToSearchResult(apiResponse: ApiResponse): SearchResult {
     description: product.description || `성분: ${normalized.activeIngredient} (${normalized.notes})`,
     ingredients: [normalized.activeIngredient], // The API gives normalized ingredient
     usage: product.usage || "약사의 지시에 따르세요.",
-    matchReason: normalized.notes || "성분이 유사한 약품입니다.",
+    matchReason: normalized.notes || "검색된 내용과 관련된 추천 약품입니다.",
     type: product.type || 'other',
     imageUrl: product.imageUrl
   }));

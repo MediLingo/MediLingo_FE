@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { COUNTRIES, SearchState } from '../types';
-import { Search, MapPin, Camera, X, Loader2 } from 'lucide-react';
+import { COUNTRIES, SearchState, SearchType } from '../types';
+import { Search, Camera, X, Loader2, Pill, Thermometer } from 'lucide-react';
 
 interface SearchHeaderProps {
   onSearch: (params: SearchState) => void;
@@ -13,6 +13,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
   const [targetCountry, setTargetCountry] = useState('JP');
   const [query, setQuery] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [searchType, setSearchType] = useState<SearchType>('drug');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -23,7 +24,8 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
       homeCountry: COUNTRIES.find(c => c.code === homeCountry)?.name || homeCountry,
       targetCountry: COUNTRIES.find(c => c.code === targetCountry)?.name || targetCountry,
       query,
-      image: previewImage
+      image: previewImage,
+      searchType
     });
   };
 
@@ -50,6 +52,13 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const toggleSearchType = (type: SearchType) => {
+    setSearchType(type);
+    setQuery('');
+    setPreviewImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div className="bg-blue-600 text-white pb-6 pt-4 px-4 shadow-lg sticky top-0 z-50 rounded-b-3xl">
       <div className="max-w-md mx-auto">
@@ -62,7 +71,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Country Selection */}
           <div className="flex items-center gap-2 bg-blue-700/50 p-1 rounded-lg">
             <select 
@@ -82,6 +91,32 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
             </select>
           </div>
 
+          {/* Search Type Tabs */}
+          <div className="flex bg-blue-800/40 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => toggleSearchType('drug')}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
+                searchType === 'drug' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-blue-100 hover:bg-blue-700/50'
+              }`}
+            >
+              <Pill size={16} /> 약 이름
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleSearchType('symptom')}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
+                searchType === 'symptom' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-blue-100 hover:bg-blue-700/50'
+              }`}
+            >
+              <Thermometer size={16} /> 증상
+            </button>
+          </div>
+
           {/* Search Input */}
           <div className="relative">
             <div className="absolute left-3 top-3.5 text-slate-400">
@@ -91,24 +126,29 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="약 이름이나 증상을 입력하세요..."
+              placeholder={searchType === 'drug' ? "약 이름 (예: 타이레놀)" : "증상 (예: 머리가 지끈거려요)"}
               className="w-full pl-10 pr-12 py-3 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
             />
             
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              <Camera size={20} />
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*"
-              onChange={handleImageUpload} 
-            />
+            {/* Camera is only available for Drug Search */}
+            {searchType === 'drug' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  <Camera size={20} />
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleImageUpload} 
+                />
+              </>
+            )}
           </div>
 
           {/* Image Preview */}

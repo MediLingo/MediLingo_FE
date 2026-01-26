@@ -11,11 +11,14 @@ export interface Medicine {
   imageUrl?: string; // Added to support API provided images
 }
 
+export type SearchType = 'drug' | 'symptom';
+
 export interface SearchState {
   homeCountry: string;
   targetCountry: string;
   query: string;
   image: string | null; // Base64 string
+  searchType: SearchType;
 }
 
 export const COUNTRIES = [
