@@ -119,9 +119,9 @@ const MOCK_SYMPTOM_RESPONSE: ApiResponse = {
 };
 
 const SEVERITY_MAP: Record<string, string> = {
-  "경미": "mild",
-  "보통": "moderate",
-  "심함": "severe"
+  "경미": "MILD",
+  "보통": "MODERATE",
+  "심함": "SEVERE"
 };
 
 export const findMedicine = async (
