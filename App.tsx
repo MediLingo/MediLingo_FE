@@ -41,7 +41,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <SearchHeader onSearch={handleSearch} onReset={handleReset} isLoading={loading} />
+      <SearchHeader 
+        onSearch={handleSearch} 
+        onReset={handleReset} 
+        isLoading={loading}
+        hasResult={!!result} />
 
       <main className="flex-grow p-4 max-w-md mx-auto w-full">
         {error && (

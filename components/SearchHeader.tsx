@@ -1,20 +1,34 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { COUNTRIES, SearchState, SearchType } from '../types';
-import { Search, Camera, X, Loader2, Pill, Thermometer } from 'lucide-react';
+import { Search, Camera, X, Loader2, Pill, Thermometer, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 interface SearchHeaderProps {
   onSearch: (params: SearchState) => void;
   onReset: () => void;
   isLoading: boolean;
+  hasResult: boolean;
 }
 
-const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading }) => {
+const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult }) => {
   const [homeCountry, setHomeCountry] = useState('KR');
   const [targetCountry, setTargetCountry] = useState('JP');
   const [query, setQuery] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<SearchType>('drug');
+  
+  // Header state: if no result, always expanded. If result exists, defaults to collapsed.
+  const [isExpanded, setIsExpanded] = useState(true);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // When a search is successfully triggered (hasResult becomes true), collapse the header
+  useEffect(() => {
+    if (hasResult) {
+      setIsExpanded(false);
+    } else {
+      setIsExpanded(true);
+    }
+  }, [hasResult]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +41,8 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
       image: previewImage,
       searchType
     });
+    // setIsExpanded(false) will be handled by the useEffect dependent on hasResult
+    // or we can force it here if optimistic update is preferred, but useEffect is safer.
   };
 
   const handleLogoClick = () => {
@@ -34,6 +50,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
     setPreviewImage(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     onReset();
+    setIsExpanded(true);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,8 +76,50 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Render the collapsed Summary View
+  if (hasResult && !isExpanded) {
+    const homeFlag = COUNTRIES.find(c => c.code === homeCountry)?.flag;
+    const targetFlag = COUNTRIES.find(c => c.code === targetCountry)?.flag;
+    
+    return (
+      <div 
+        onClick={() => setIsExpanded(true)}
+        className="bg-blue-600 text-white shadow-lg sticky top-0 z-50 cursor-pointer hover:bg-blue-700 transition-colors animate-fadeIn"
+      >
+        <div className="max-w-md mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3 overflow-hidden">
+               {/* Icon */}
+              <div className="p-2 bg-blue-500 rounded-full flex-shrink-0">
+                {searchType === 'drug' ? <Pill size={16} /> : <Thermometer size={16} />}
+              </div>
+              
+              {/* Text Summary */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-1 text-xs text-blue-200 mb-0.5">
+                   <span>{homeFlag}</span> 
+                   <span>→</span> 
+                   <span>{targetFlag}</span>
+                </div>
+                <h2 className="text-md font-bold truncate pr-2">
+                  {query || (previewImage ? "사진 검색" : "검색")}
+                </h2>
+              </div>
+            </div>
+
+            {/* Action Icon */}
+            <div className="flex-shrink-0 text-blue-200">
+               <ChevronDown size={24} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render the Expanded Full Form
   return (
-    <div className="bg-blue-600 text-white pb-6 pt-4 px-4 shadow-lg sticky top-0 z-50 rounded-b-3xl">
+    <div className="bg-blue-600 text-white pb-6 pt-4 px-4 shadow-lg sticky top-0 z-50 rounded-b-3xl transition-all">
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 
@@ -69,6 +128,16 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
           >
             <span className="text-3xl">💊</span> MediLingo
           </h1>
+          
+          {/* Close button only if we have a result (cancellable edit) */}
+          {hasResult && (
+            <button 
+              onClick={() => setIsExpanded(false)}
+              className="p-2 text-blue-200 hover:text-white hover:bg-blue-700 rounded-full transition-colors"
+            >
+              <ChevronUp size={24} />
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
