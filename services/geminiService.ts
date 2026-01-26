@@ -1,5 +1,5 @@
 
-import { SearchResult, Medicine, SearchType } from "../types";
+import { SearchResult, Medicine, SearchType, Symptom } from "../types";
 
 // Define the API Response structure based on the requirements
 interface ApiLocalProduct {
@@ -118,13 +118,19 @@ const MOCK_SYMPTOM_RESPONSE: ApiResponse = {
   error: null
 };
 
+const SEVERITY_MAP: Record<string, string> = {
+  "경미": "mild",
+  "보통": "moderate",
+  "심함": "severe"
+};
 
 export const findMedicine = async (
   homeCountry: string, // Not used in API payload example but kept for interface consistency
   targetCountry: string,
   query: string,
   imageBase64: string | null,
-  searchType: SearchType
+  searchType: SearchType,
+  symptoms?: Symptom[]
 ): Promise<SearchResult> => {
   
   // API Call Simulation
@@ -143,8 +149,18 @@ export const findMedicine = async (
     } else {
       // Logic for Symptom Search
       apiEndpoint = '/api/drug/diagnose';
+    
+      // Map UI severity (Korean) to API severity (English)
+      const formattedSymptoms = symptoms?.map(s => ({
+        name: s.name,
+        severity: SEVERITY_MAP[s.severity] || "moderate" // Default to moderate if not found
+      })) || [];
+
       requestBody = {
-        symptomText: query,
+        symptoms: formattedSymptoms,
+        // Optional fields are omitted as per requirement, but structure is ready
+        // patient: { ... },
+        // constraints: { ... },
         countryCode: targetCountry
       };
       mockDataToReturn = MOCK_SYMPTOM_RESPONSE;

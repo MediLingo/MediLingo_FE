@@ -13,12 +13,18 @@ export interface Medicine {
 
 export type SearchType = 'drug' | 'symptom';
 
+export interface Symptom {
+  name: string;
+  severity: string;
+}
+
 export interface SearchState {
   homeCountry: string;
   targetCountry: string;
-  query: string;
+  query: string; // Used for display summary and drug search
   image: string | null; // Base64 string
   searchType: SearchType;
+  symptoms?: Symptom[]; // Added for structured API requests
 }
 
 export const COUNTRIES = [

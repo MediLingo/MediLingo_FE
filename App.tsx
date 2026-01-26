@@ -23,7 +23,8 @@ const App: React.FC = () => {
         params.targetCountry,
         params.query,
         params.image,
-        params.searchType
+        params.searchType,
+        params.symptoms
       );
       setResult(data);
     } catch (err: any) {
