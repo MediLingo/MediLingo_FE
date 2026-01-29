@@ -28,6 +28,14 @@ export interface SearchState {
   symptoms?: Symptom[]; // Added for structured API requests
 }
 
+export interface RankingItem {
+  localProductId: number;
+  localName: string;
+  imageUrl: string;
+  source: string;
+  clickCount: number;
+}
+
 export const COUNTRIES = [
   { code: 'KR', name: '대한민국', flag: '🇰🇷' },
   { code: 'JP', name: '일본', flag: '🇯🇵' },
