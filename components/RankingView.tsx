@@ -43,7 +43,7 @@ export const RankingView: React.FC = () => {
   };
 
   return (
-    <div className="p-4 pt-6 pb-20 max-w-md mx-auto min-h-screen bg-slate-50">
+    <div className="w-full max-w-sm mx-auto p-4 pt-6 pb-20 min-h-screen bg-slate-50 overflow-x-hidden">
       <div className="flex items-center gap-2 mb-6">
         <TrendingUp className="text-red-500 w-8 h-8" />
         <h2 className="text-2xl font-bold text-slate-900">주간 인기 약 랭킹</h2>
@@ -105,7 +105,7 @@ export const RankingView: React.FC = () => {
                 </div>
 
                 <div className="flex-grow min-w-0">
-                  <h3 className="font-bold text-slate-800 text-lg truncate mb-1">
+                  <h3 className="font-bold text-slate-800 text-sm truncate mb-1">
                     {item.localName}
                   </h3>
                   <div className="flex items-center gap-3 text-xs text-slate-500">
