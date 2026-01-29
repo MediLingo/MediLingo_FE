@@ -9,6 +9,17 @@ interface MedicineCardProps {
   countryCode: string;
 }
 
+// ✅ baseURL + mock 토글 (Vite env)
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.trim() || "https://medilingo-be.onrender.com";
+
+const USE_MOCK =
+  String(import.meta.env.VITE_USE_MOCK || "false").toLowerCase() === "true";
+
+// ✅ 슬래시 중복 방지 URL 조합
+const joinUrl = (base: string, path: string) =>
+  `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+
 const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -16,19 +27,40 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode
     // Determine the next state
     const nextState = !isExpanded;
     setIsExpanded(nextState);
+    let apiPath = '';
 
     // If we are expanding (state becoming true), call the API
     if (nextState) {
       try {
-        await fetch(`/api/drugs/${medicine.id}/click`, {
+        const id = String((medicine as any).localProductId ?? "").trim();
+
+        // Guard: if mapping is still using a temp id, skip tracking to avoid noisy 4xx
+        if (!id || id.startsWith("temp_")) {
+          console.warn("[track click] skipped (invalid id)", { id, medicine });
+          return;
+        }
+
+        // NOTE: backend routes are typically under `/api` (align with other calls)
+        apiPath = `/api/drugs/${encodeURIComponent(id)}/click`;
+        const url = joinUrl(API_BASE_URL, apiPath);
+
+        const res = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            countryCode: countryCode
-          }),
+          body: JSON.stringify({ countryCode }),
         });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn("[track click] failed", {
+            status: res.status,
+            url,
+            body: text,
+            id,
+          });
+        }
       } catch (error) {
         // Silently fail for analytics/tracking to not disrupt UX
         console.error("Failed to track click:", error);

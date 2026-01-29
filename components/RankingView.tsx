@@ -52,20 +52,20 @@ export const RankingView: React.FC = () => {
       {/* Country Selector */}
       <div className="mb-6 overflow-x-auto no-scrollbar pb-2">
         <div className="flex gap-2">
-          {COUNTRIES.map((country) => (
+            {COUNTRIES.filter((country) => country.name !== "대한민국").map((country) => (
             <button
               key={country.code}
               onClick={() => setSelectedCountry(country.code)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all ${
-                selectedCountry === country.code
-                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              selectedCountry === country.code
+                ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               <span>{country.flag}</span>
               <span>{country.name}</span>
             </button>
-          ))}
+            ))}
         </div>
       </div>
 

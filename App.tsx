@@ -17,12 +17,14 @@ const App: React.FC = () => {
   const [lastSearch, setLastSearch] = useState<SearchState | null>(null);
 
   const handleSearch = async (params: SearchState) => {
+    console.log("[App] handleSearch called", params);
     setLoading(true);
     setError(null);
     setResult(null);
     setLastSearch(params);
 
     try {
+      console.log("[App] calling findMedicine");
       const data = await findMedicine(
         params.homeCountry,
         params.targetCountry,
@@ -31,8 +33,10 @@ const App: React.FC = () => {
         params.searchType,
         params.symptoms
       );
+      console.log("[App] findMedicine returned", data);
       setResult(data);
     } catch (err: any) {
+      console.error("[App] handleSearch error", err);
       setError(err.message || "약 정보를 찾지 못했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
@@ -53,7 +57,8 @@ const App: React.FC = () => {
           onSearch={handleSearch} 
           onReset={handleReset} 
           isLoading={loading}
-          hasResult={!!result} 
+          hasResult={!!result}
+          lastSearch={lastSearch}
         />
 
         <main className="flex-grow p-4 max-w-md mx-auto w-full">
