@@ -1,5 +1,6 @@
 
 export interface Medicine {
+  id: string;
   name: string;
   localName: string; // The name in the target country's language
   manufacturer: string;

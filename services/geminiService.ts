@@ -1,8 +1,8 @@
-
 import { SearchResult, Medicine, SearchType, Symptom } from "../types";
 
 // Define the API Response structure based on the requirements
 interface ApiLocalProduct {
+  id: number; // backend long
   name: string;
   imageUrl: string;
   source: string;
@@ -42,6 +42,7 @@ const MOCK_DRUG_RESPONSE: ApiResponse = {
     },
     localProducts: [
       {
+        id: 1001,
         name: "EVE A (イブA錠)",
         imageUrl: "https://image.dokodemo.world/catalog-skus/1078712/f05e55504d720eb0a86ed4c0bb71c5ee.png?d=1000x0",
         source: "seed",
@@ -51,6 +52,7 @@ const MOCK_DRUG_RESPONSE: ApiResponse = {
         manufacturer: "SS Pharmaceutical"
       },
       {
+        id: 1002,
         name: "Bufferin Premium (バファリン)",
         imageUrl: "https://doc.lion.co.jp/uploads/grn/product/normal_image/188/bufferin_premium20.png",
         source: "seed",
@@ -60,6 +62,7 @@ const MOCK_DRUG_RESPONSE: ApiResponse = {
         manufacturer: "Lion Corp"
       },
       {
+        id: 1003,
         name: "Loxonin S (ロキソニンS)",
         imageUrl: "https://www.daiichisankyo-hc.co.jp/library/content/img_library/image/loxonin-s_CF005_main.jpg",
         source: "seed",
@@ -86,6 +89,7 @@ const MOCK_SYMPTOM_RESPONSE: ApiResponse = {
     },
     localProducts: [
       {
+        id: 2001,
         name: "EVE A (イブA錠)",
         imageUrl: "https://image.dokodemo.world/catalog-skus/1078712/f05e55504d720eb0a86ed4c0bb71c5ee.png?d=1000x0",
         source: "seed",
@@ -95,6 +99,7 @@ const MOCK_SYMPTOM_RESPONSE: ApiResponse = {
         manufacturer: "SS Pharmaceutical"
       },
       {
+        id: 2002,
         name: "Bufferin Premium (バファリン)",
         imageUrl: "https://doc.lion.co.jp/uploads/grn/product/normal_image/188/bufferin_premium20.png",
         source: "seed",
@@ -104,6 +109,7 @@ const MOCK_SYMPTOM_RESPONSE: ApiResponse = {
         manufacturer: "Lion Corp"
       },
       {
+        id: 2003,
         name: "Loxonin S (ロキソニンS)",
         imageUrl: "https://www.daiichisankyo-hc.co.jp/library/content/img_library/image/loxonin-s_CF005_main.jpg",
         source: "seed",
@@ -204,6 +210,7 @@ function mapApiResponseToSearchResult(apiResponse: ApiResponse): SearchResult {
   const { normalized, localProducts, disclaimer } = apiResponse.data;
 
   const medicines: Medicine[] = localProducts.map(product => ({
+    id: String(product.id ?? `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`), // long -> string
     name: product.name,
     // Since API sends combined name or just English, use it for both unless we split it manually
     localName: product.name, 

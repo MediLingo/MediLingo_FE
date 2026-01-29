@@ -111,7 +111,12 @@ const App: React.FC = () => {
             {/* Medicine List */}
             <div className="space-y-4">
               {result.medicines.map((med, index) => (
-                <MedicineCard key={index} medicine={med} rank={index + 1} />
+                <MedicineCard 
+                  key={index} 
+                  medicine={med} 
+                  rank={index + 1} 
+                  countryCode={lastSearch?.targetCountry || 'JP'} // Default fallback if needed, though logically should exist
+                />
               ))}
             </div>
 
