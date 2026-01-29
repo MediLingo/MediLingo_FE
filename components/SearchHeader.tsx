@@ -7,6 +7,7 @@ interface SearchHeaderProps {
   onReset: () => void;
   isLoading: boolean;
   hasResult: boolean;
+  lastSearch: SearchState | null;
 }
 
 const SYMPTOMS_LIST = [
@@ -24,7 +25,7 @@ interface SymptomPair {
   severity: string;
 }
 
-const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult }) => {
+const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult, lastSearch }) => {
   const [homeCountry, setHomeCountry] = useState('KR');
   const [targetCountry, setTargetCountry] = useState('JP');
   
@@ -58,14 +59,25 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    console.log("[SearchHeader] handleSubmit fired", {
+      searchType,
+      homeCountry,
+      targetCountry,
+      query,
+      hasPreviewImage: Boolean(previewImage),
+      symptomPairs,
+      isLoading,
+      hasResult,
+    });
     let finalQuery = query;
     let symptomsPayload: Symptom[] | undefined = undefined;
 
     if (searchType === 'symptom') {
       const validPairs = symptomPairs.filter(p => p.name.trim() !== '');
-      if (validPairs.length === 0) return;
-      
+      if (validPairs.length === 0) {
+        console.log("[SearchHeader] blocked: no valid symptom pairs");
+        return;
+      }
       // Serialize for UI Display (Summary)
       finalQuery = validPairs.map(p => `${p.name}(${p.severity})`).join(', ');
       setQuery(finalQuery);
@@ -77,12 +89,15 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
       }));
 
     } else {
-      if (!query && !previewImage) return;
+      if (!query && !previewImage) {
+        console.log("[SearchHeader] blocked: empty query and no image");
+        return;
+      }
     }
-    
+    console.log("[SearchHeader] calling onSearch");
     onSearch({
-      homeCountry: COUNTRIES.find(c => c.code === homeCountry)?.name || homeCountry,
-      targetCountry: COUNTRIES.find(c => c.code === targetCountry)?.name || targetCountry,
+      homeCountry,
+      targetCountry,
       query: finalQuery,
       image: previewImage,
       searchType,
@@ -149,9 +164,25 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
 
   // Render the collapsed Summary View
   if (hasResult && !isExpanded) {
-    const homeFlag = COUNTRIES.find(c => c.code === homeCountry)?.flag;
-    const targetFlag = COUNTRIES.find(c => c.code === targetCountry)?.flag;
-    
+    const summaryHome = lastSearch?.homeCountry ?? homeCountry;
+    const summaryTarget = lastSearch?.targetCountry ?? targetCountry;
+    const summaryType = lastSearch?.searchType ?? searchType;
+    const summaryHasImage = Boolean(lastSearch?.image ?? previewImage);
+
+    // Prefer query from lastSearch; if symptom search and query is empty, serialize symptoms.
+    const summaryQuery = (() => {
+      const q = (lastSearch?.query ?? query ?? '').trim();
+      if (q) return q;
+      const symptoms = lastSearch?.symptoms;
+      if (symptoms && symptoms.length > 0) {
+        return symptoms.map(s => `${s.name}(${s.severity})`).join(', ');
+      }
+      return '';
+    })();
+
+    const homeFlag = COUNTRIES.find(c => c.code === summaryHome)?.flag;
+    const targetFlag = COUNTRIES.find(c => c.code === summaryTarget)?.flag;
+
     return (
       <div 
         onClick={() => setIsExpanded(true)}
@@ -162,7 +193,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
             <div className="flex items-center gap-3 overflow-hidden">
                {/* Icon */}
               <div className="p-2 bg-blue-500 rounded-full flex-shrink-0">
-                {searchType === 'drug' ? <Pill size={16} /> : <Thermometer size={16} />}
+                {summaryType === 'drug' ? <Pill size={16} /> : <Thermometer size={16} />}
               </div>
               
               {/* Text Summary */}
@@ -173,7 +204,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
                    <span>{targetFlag}</span>
                 </div>
                 <h2 className="text-md font-bold truncate pr-2">
-                  {query || (previewImage ? "사진 검색" : "검색")}
+                  {summaryQuery || (summaryHasImage ? "사진 검색" : "검색")}
                 </h2>
               </div>
             </div>
@@ -370,6 +401,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
           <button 
             type="submit" 
             disabled={isLoading || (searchType === 'drug' && !query && !previewImage) || (searchType === 'symptom' && symptomPairs.every(p => !p.name))}
+            onClick={() => console.log("[SearchHeader] submit button clicked", { disabled: isLoading || (searchType === 'drug' && !query && !previewImage) || (searchType === 'symptom' && symptomPairs.every(p => !p.name)) })}
             className="w-full bg-white text-blue-600 font-bold py-3 rounded-xl hover:bg-blue-50 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-lg mt-4"
           >
             {isLoading ? (

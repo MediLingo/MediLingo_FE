@@ -6,10 +6,67 @@ import { Pill, Droplets, SprayCan as Spray, Info, Check, ChevronDown, ChevronUp 
 interface MedicineCardProps {
   medicine: Medicine;
   rank: number;
+  countryCode: string;
 }
 
-const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank }) => {
+// ✅ baseURL + mock 토글 (Vite env)
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.trim() || "https://medilingo-be.onrender.com";
+
+const USE_MOCK =
+  String(import.meta.env.VITE_USE_MOCK || "false").toLowerCase() === "true";
+
+// ✅ 슬래시 중복 방지 URL 조합
+const joinUrl = (base: string, path: string) =>
+  `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+
+const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpand = async () => {
+    // Determine the next state
+    const nextState = !isExpanded;
+    setIsExpanded(nextState);
+    let apiPath = '';
+
+    // If we are expanding (state becoming true), call the API
+    if (nextState) {
+      try {
+        const id = String((medicine as any).localProductId ?? "").trim();
+
+        // Guard: if mapping is still using a temp id, skip tracking to avoid noisy 4xx
+        if (!id || id.startsWith("temp_")) {
+          console.warn("[track click] skipped (invalid id)", { id, medicine });
+          return;
+        }
+
+        // NOTE: backend routes are typically under `/api` (align with other calls)
+        apiPath = `/api/drugs/${encodeURIComponent(id)}/click`;
+        const url = joinUrl(API_BASE_URL, apiPath);
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ countryCode }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn("[track click] failed", {
+            status: res.status,
+            url,
+            body: text,
+            id,
+          });
+        }
+      } catch (error) {
+        // Silently fail for analytics/tracking to not disrupt UX
+        console.error("Failed to track click:", error);
+      }
+    }
+  };
 
   const getIcon = () => {
     switch (medicine.type) {
@@ -26,7 +83,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4 transition-all hover:shadow-md">
-      <div className="flex p-4 gap-4" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="flex p-4 gap-4 cursor-pointer" onClick={toggleExpand}>
         {/* Rank Badge */}
         <div className="flex-shrink-0">
           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
@@ -95,7 +152,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank }) => {
 
       {/* Toggle Button Area */}
       <button 
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={toggleExpand}
         className="w-full py-2 bg-slate-50 border-t border-slate-100 text-slate-400 flex items-center justify-center hover:text-blue-600 transition-colors"
       >
         {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
