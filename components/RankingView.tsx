@@ -4,7 +4,7 @@ import { COUNTRIES, RankingItem } from '../types';
 import { fetchWeeklyRanking } from '../services/geminiService';
 
 export const RankingView: React.FC = () => {
-  const [selectedCountry, setSelectedCountry] = useState('JP');
+  const [selectedCountry, setSelectedCountry] = useState('US');
   const [rankings, setRankings] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +46,7 @@ export const RankingView: React.FC = () => {
     <div className="w-full max-w-sm mx-auto p-4 pt-6 pb-20 min-h-screen bg-slate-50 overflow-x-hidden">
       <div className="flex items-center gap-2 mb-6">
         <TrendingUp className="text-red-500 w-8 h-8" />
-        <h2 className="text-2xl font-bold text-slate-900">주간 인기 약 랭킹</h2>
+        <h2 className="text-2xl font-bold text-slate-900">인기 약 랭킹</h2>
       </div>
 
       {/* Country Selector */}

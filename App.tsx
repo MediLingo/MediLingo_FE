@@ -128,7 +128,7 @@ const App: React.FC = () => {
                     key={index} 
                     medicine={med} 
                     rank={index + 1} 
-                    countryCode={lastSearch?.targetCountry || 'JP'} 
+                    countryCode={lastSearch?.targetCountry || 'US'} 
                   />
                 ))}
               </div>

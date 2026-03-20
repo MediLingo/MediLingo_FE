@@ -26,8 +26,8 @@ interface SymptomPair {
 }
 
 const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult, lastSearch }) => {
-  const [homeCountry, setHomeCountry] = useState('KR');
-  const [targetCountry, setTargetCountry] = useState('JP');
+  const homeCountry = 'KR';
+  const [targetCountry, setTargetCountry] = useState('US');
   
   // Query state is used for the display in collapsed mode and drug search input
   const [query, setQuery] = useState('');
@@ -245,20 +245,16 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Country Selection */}
           <div className="flex items-center gap-2 bg-blue-700/50 p-1 rounded-lg">
-            <select 
-              value={homeCountry}
-              onChange={(e) => setHomeCountry(e.target.value)}
-              className="bg-transparent text-white text-sm font-medium w-1/2 p-2 outline-none text-center appearance-none cursor-pointer hover:bg-blue-600 rounded"
-            >
-              {COUNTRIES.map(c => <option key={c.code} value={c.code} className="text-slate-900">{c.flag} 출발: {c.name}</option>)}
-            </select>
+            <div className="w-1/2 p-2 text-center text-sm font-medium text-blue-300/70 cursor-default select-none">
+              {COUNTRIES.find(c => c.code === homeCountry)?.flag} 출발: {COUNTRIES.find(c => c.code === homeCountry)?.name}
+            </div>
             <span className="text-blue-300">➜</span>
             <select 
               value={targetCountry}
               onChange={(e) => setTargetCountry(e.target.value)}
               className="bg-transparent text-white text-sm font-medium w-1/2 p-2 outline-none text-center appearance-none cursor-pointer hover:bg-blue-600 rounded"
             >
-              {COUNTRIES.map(c => <option key={c.code} value={c.code} className="text-slate-900">{c.flag} 도착: {c.name}</option>)}
+              {COUNTRIES.filter(c => c.code !== homeCountry).map(c => <option key={c.code} value={c.code} className="text-slate-900">{c.flag} 도착: {c.name}</option>)}
             </select>
           </div>
 

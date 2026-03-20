@@ -11,7 +11,7 @@ interface MedicineCardProps {
 
 // ✅ baseURL + mock 토글 (Vite env)
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "https://medilingo-be.onrender.com";
+  import.meta.env.VITE_API_BASE_URL?.trim();
 
 const USE_MOCK =
   String(import.meta.env.VITE_USE_MOCK || "false").toLowerCase() === "true";

@@ -2,7 +2,7 @@ import { SearchResult, Medicine, SearchType, Symptom, RankingItem } from "../typ
 
 // ✅ baseURL + mock 토글 (Vite env)
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "https://medilingo-be.onrender.com";
+  import.meta.env.VITE_API_BASE_URL?.trim();
 
 const USE_MOCK =
   String(import.meta.env.VITE_USE_MOCK || "false").toLowerCase() === "true";
@@ -148,7 +148,7 @@ export const fetchWeeklyRanking = async (
     if (USE_MOCK) {
       await new Promise((resolve) => setTimeout(resolve, 400));
       const data = assertMock(MOCK_RANKING_DATA, "MOCK_RANKING_DATA");
-      const rankings = data[countryCode] || data["JP"] || [];
+      const rankings = data[countryCode] || data["US"] || [];
       return rankings.slice(0, limit);
     }
 
