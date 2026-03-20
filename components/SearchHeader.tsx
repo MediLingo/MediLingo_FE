@@ -303,13 +303,6 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
                 className="w-full pl-10 pr-12 py-3 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
               />
               
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Camera size={20} />
-              </button>
               <input 
                 type="file" 
                 ref={fileInputRef} 
