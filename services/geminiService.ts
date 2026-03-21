@@ -13,25 +13,23 @@ const joinUrl = (base: string, path: string) =>
 
 // Define the API Response structure based on the requirements
 interface ApiLocalProduct {
-  localProductId: number; // backend long
+  localProductId: number | null;
   name: string;
   imageUrl: string;
   source: string;
-  description?: string;
-  usage?: string;
-  type?: "pill" | "liquid" | "cream" | "patch" | "other";
-  manufacturer?: string;
+  reason: string | null;
+  coverageWarning: string | null;
 }
 
 interface ApiResponseData {
   normalized: {
-    activeIngredient: string;
-    dose: string;
-    form: string;
+    activeIngredients: string[];
+    dose: string | null;
+    form: string | null;
     notes: string;
   };
   localProducts: ApiLocalProduct[];
-  disclaimer: string;
+  disclaimer?: string;
 }
 
 interface ApiResponse {
@@ -134,7 +132,7 @@ export const findMedicine = async (
   } catch (error) {
     console.error("API Error:", error);
     // If mock data isn't provided, don't crash the UI — return an empty result.
-    return { medicines: [], advice: "" };
+    return { medicines: [], advice: "", ingredients: [] };
   }
 };
 
@@ -182,14 +180,11 @@ function mapApiResponseToSearchResult(apiResponse: ApiResponse): SearchResult {
     localProductId: String(product.localProductId ?? `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`),
     name: product.name,
     localName: product.name,
-    manufacturer: product.manufacturer || "Unknown Manufacturer",
-    description: product.description || `성분: ${normalized.activeIngredient} (${normalized.notes})`,
-    ingredients: [normalized.activeIngredient],
-    usage: product.usage || "약사의 지시에 따르세요.",
-    matchReason: normalized.notes || "검색된 내용과 관련된 추천 약품입니다.",
-    type: product.type || "other",
+    matchReason: product.reason || "검색된 내용과 관련된 추천 약품입니다.",
+    coverageWarning: product.coverageWarning ?? undefined,
+    type: "other",
     imageUrl: product.imageUrl,
   }));
 
-  return { medicines, advice: disclaimer };
+  return { medicines, advice: disclaimer ?? "", ingredients: normalized.activeIngredients };
 }

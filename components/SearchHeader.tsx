@@ -8,6 +8,7 @@ interface SearchHeaderProps {
   isLoading: boolean;
   hasResult: boolean;
   lastSearch: SearchState | null;
+  onSearchTypeChange?: (type: SearchType) => void;
 }
 
 const SYMPTOMS_LIST = [
@@ -25,7 +26,7 @@ interface SymptomPair {
   severity: string;
 }
 
-const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult, lastSearch }) => {
+const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult, lastSearch, onSearchTypeChange }) => {
   const homeCountry = 'KR';
   const [targetCountry, setTargetCountry] = useState('US');
   
@@ -132,6 +133,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
 
   const toggleSearchType = (type: SearchType) => {
     setSearchType(type);
+    onSearchTypeChange?.(type);
     // Reset inputs when switching
     if (type === 'drug') {
       setQuery('');

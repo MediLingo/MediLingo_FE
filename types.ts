@@ -3,11 +3,8 @@ export interface Medicine {
   localProductId: string;
   name: string;
   localName: string; // The name in the target country's language
-  manufacturer: string;
-  description: string;
-  ingredients: string[];
-  usage: string;
   matchReason: string; // Why is this a match?
+  coverageWarning?: string; // Ingredients not covered by this product
   type: 'pill' | 'liquid' | 'cream' | 'patch' | 'other';
   imageUrl?: string; // Added to support API provided images
 }
@@ -48,4 +45,5 @@ export const COUNTRIES = [
 export interface SearchResult {
   medicines: Medicine[];
   advice: string;
+  ingredients: string[];
 }

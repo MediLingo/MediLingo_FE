@@ -4,7 +4,7 @@ import MedicineCard from './components/MedicineCard';
 import BottomNav from './components/BottomNav';
 import { RankingView } from './components/RankingView';
 import { findMedicine } from './services/geminiService';
-import { SearchResult, SearchState } from './types';
+import { SearchResult, SearchState, SearchType } from './types';
 import { AlertTriangle, Info, Globe, ShieldCheck, Thermometer, Pill } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSearch, setLastSearch] = useState<SearchState | null>(null);
+  const [searchType, setSearchType] = useState<SearchType>('drug');
 
   const handleSearch = async (params: SearchState) => {
     console.log("[App] handleSearch called", params);
@@ -59,6 +60,7 @@ const App: React.FC = () => {
           isLoading={loading}
           hasResult={!!result}
           lastSearch={lastSearch}
+          onSearchTypeChange={setSearchType}
         />
 
         <main className="flex-grow p-4 max-w-md mx-auto w-full">
@@ -79,16 +81,58 @@ const App: React.FC = () => {
                 위의 탭을 눌러 <strong>약 이름</strong> 혹은 <strong>증상</strong>으로<br/>현지 약을 검색해보세요.
               </p>
               
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-                    <Thermometer className="text-blue-500 w-8 h-8 mb-2" />
-                    <div className="text-xs font-bold text-slate-700">"배가 너무 아파요"</div>
+
+              {searchType === 'drug' ? (
+                <div className="mt-6">
+                  <p className="text-xs text-slate-400 mb-3">자주 찾는 약</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {['타이레놀', '판콜', '콜대원', '알보칠', '게보린', '이지엔식스', '판피린', '알레그라'].map((medicine) => (
+                      <button
+                        key={medicine}
+                        onClick={() => handleSearch({
+                          homeCountry: 'KR',
+                          targetCountry: 'US',
+                          query: medicine,
+                          image: null,
+                          searchType: 'drug',
+                          symptoms: undefined,
+                        })}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors shadow-sm"
+                      >
+                        {medicine}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-                    <Pill className="text-purple-500 w-8 h-8 mb-2" />
-                    <div className="text-xs font-bold text-slate-700">"타이레놀 찾아줘"</div>
+              ) : (
+                <div className="mt-6">
+                  <p className="text-xs text-slate-400 mb-3">자주 찾는 증상</p>
+                  <div className="flex flex-col gap-2 items-center">
+                    {[
+                      { label: '몸이 으슬으슬해요', symptom: '오한' },
+                      { label: '열이 나요', symptom: '발열' },
+                      { label: '목이 아파요', symptom: '인후통' },
+                      { label: '콧물이 나요', symptom: '콧물' },
+                      { label: '배가 아파요', symptom: '복통' },
+                    ].map(({ label, symptom }) => (
+                      <button
+                        key={symptom}
+                        onClick={() => handleSearch({
+                          homeCountry: 'KR',
+                          targetCountry: 'US',
+                          query: `${symptom}(보통)`,
+                          image: null,
+                          searchType: 'symptom',
+                          symptoms: [{ name: symptom, severity: '보통' }],
+                        })}
+                        className="w-full max-w-xs px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors shadow-sm text-left"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -102,7 +146,9 @@ const App: React.FC = () => {
                   {lastSearch && (
                     <>
                       <span className="text-xs font-medium px-2 py-1 bg-slate-200 text-slate-700 rounded-lg">
-                        {lastSearch.searchType === 'drug' ? '약 이름' : '증상'}
+                        {lastSearch.searchType === 'drug'
+                          ? lastSearch.query
+                          : lastSearch.symptoms?.map(s => s.name).join(', ') || lastSearch.query}
                       </span>
                       <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">
                         {lastSearch.targetCountry}
@@ -115,9 +161,21 @@ const App: React.FC = () => {
               {/* AI Advice Card */}
               <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6 text-sm text-amber-900 flex gap-3">
                 <Info className="shrink-0 text-amber-600 w-5 h-5" />
-                <div>
+                <div className="w-full">
                   <p className="font-semibold mb-1">AI 약사 조언</p>
                   <p>{result.advice}</p>
+                  {result.ingredients.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-amber-200">
+                      <p className="font-semibold mb-2">주요 성분</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.ingredients.map((ing, idx) => (
+                          <span key={idx} className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full border border-amber-200">
+                            {ing}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

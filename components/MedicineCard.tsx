@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Medicine } from '../types';
-import { Pill, Droplets, SprayCan as Spray, Info, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 interface MedicineCardProps {
   medicine: Medicine;
@@ -22,11 +22,13 @@ const joinUrl = (base: string, path: string) =>
 
 const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const toggleExpand = async () => {
     // Determine the next state
     const nextState = !isExpanded;
     setIsExpanded(nextState);
+    if (!nextState) setImgError(false);
     let apiPath = '';
 
     // If we are expanding (state becoming true), call the API
@@ -68,14 +70,6 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode
     }
   };
 
-  const getIcon = () => {
-    switch (medicine.type) {
-      case 'liquid': return <Droplets className="w-5 h-5 text-blue-500" />;
-      case 'cream': return <Spray className="w-5 h-5 text-purple-500" />;
-      default: return <Pill className="w-5 h-5 text-emerald-500" />;
-    }
-  };
-
   // Use provided imageUrl or fallback to a placeholder
   const imageUrl = medicine.imageUrl 
     ? medicine.imageUrl 
@@ -95,20 +89,17 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode
         <div className="flex-grow min-w-0">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 leading-tight">{medicine.name}</h3>
-              <p className="text-xl font-bold text-blue-700 font-sans mt-1">{medicine.localName}</p>
-            </div>
-            <div className="bg-slate-100 p-2 rounded-lg">
-              {getIcon()}
+              <p className="text-xl font-bold text-blue-700 font-sans">{medicine.localName}</p>
             </div>
           </div>
           
-          <p className="text-sm text-slate-500 mt-1">{medicine.manufacturer}</p>
           
-          <div className="mt-2 flex items-center gap-1 text-sm text-emerald-700 bg-emerald-50 px-2 py-1 rounded w-fit">
-            <Check size={14} />
-            <span className="font-medium truncate max-w-[200px]">{medicine.matchReason}</span>
-          </div>
+          {medicine.coverageWarning && (
+            <div className="mt-2 flex items-start gap-1 text-sm text-red-700 bg-red-50 px-2 py-1 rounded w-fit">
+              <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+              <span className="font-medium break-words">{medicine.coverageWarning}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -116,35 +107,30 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode
       {isExpanded && (
         <div className="px-4 pb-4 bg-slate-50 border-t border-slate-100 animate-fadeIn">
           <div className="mt-4">
-             <img 
-              src={imageUrl} 
-              alt={medicine.name} 
-              className="w-full h-80 object-cover rounded-lg mb-4 bg-slate-200"
-            />
+            {imgError ? (
+              <div className="w-full h-80 rounded-lg mb-4 bg-slate-200 flex items-center justify-center">
+                <p className="text-slate-600 text-2xl font-bold text-center px-4 break-words">
+                  {medicine.localName}
+                </p>
+              </div>
+            ) : (
+              <img
+                src={imageUrl}
+                alt={medicine.name}
+                className="w-full h-80 object-cover rounded-lg mb-4 bg-slate-200"
+                onError={() => setImgError(true)}
+              />
+            )}
             
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <h4 className="text-xs font-semibold uppercase text-slate-400 mb-1">효능 / 설명</h4>
-                <p className="text-slate-700 text-sm">{medicine.description}</p>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-semibold uppercase text-slate-400 mb-1">복용법</h4>
-                <p className="text-slate-800 font-medium text-sm bg-white border border-slate-200 p-2 rounded">
-                  {medicine.usage}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-semibold uppercase text-slate-400 mb-1">주요 성분</h4>
-                <div className="flex flex-wrap gap-2">
-                  {medicine.ingredients && medicine.ingredients.map((ing, idx) => (
-                    <span key={idx} className="text-xs bg-slate-200 text-slate-700 px-2 py-1 rounded-full">
-                      {ing}
-                    </span>
-                  ))}
+                <h4 className="text-xs font-semibold uppercase text-slate-400 mb-1"> 성분 설명</h4>
+                <div className="flex items-start gap-1 text-sm text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
+                  <Check size={14} className="mt-0.5 flex-shrink-0" />
+                  <span className="break-words">{medicine.matchReason}</span>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
