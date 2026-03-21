@@ -25,3 +25,8 @@ dist-ssr
 
 # Capacitor local override (per-developer)
 capacitor.config.local.json
+.vercel
+
+.env
+.env.local
+landing.html
