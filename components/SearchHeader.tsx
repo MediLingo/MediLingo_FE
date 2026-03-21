@@ -9,6 +9,7 @@ interface SearchHeaderProps {
   hasResult: boolean;
   lastSearch: SearchState | null;
   onSearchTypeChange?: (type: SearchType) => void;
+  onTabSelected?: (selected: boolean) => void;
 }
 
 const SYMPTOMS_LIST = [
@@ -26,7 +27,7 @@ interface SymptomPair {
   severity: string;
 }
 
-const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult, lastSearch, onSearchTypeChange }) => {
+const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoading, hasResult, lastSearch, onSearchTypeChange, onTabSelected }) => {
   const homeCountry = 'KR';
   const [targetCountry, setTargetCountry] = useState('US');
   
@@ -34,6 +35,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
   const [query, setQuery] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<SearchType>('drug');
+  const [isTabSelected, setIsTabSelected] = useState(false);
   
   // Symptom Search State
   const [symptomPairs, setSymptomPairs] = useState<SymptomPair[]>([
@@ -109,9 +111,11 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
   const handleLogoClick = () => {
     setQuery('');
     setPreviewImage(null);
+    setIsTabSelected(false);
     setSymptomPairs([{ id: Date.now(), name: '', severity: '보통' }]);
     if (fileInputRef.current) fileInputRef.current.value = '';
     onReset();
+    onTabSelected?.(false);
     setIsExpanded(true);
   };
 
@@ -133,7 +137,9 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
 
   const toggleSearchType = (type: SearchType) => {
     setSearchType(type);
+    setIsTabSelected(true);
     onSearchTypeChange?.(type);
+    onTabSelected?.(true);
     // Reset inputs when switching
     if (type === 'drug') {
       setQuery('');
@@ -266,7 +272,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
               type="button"
               onClick={() => toggleSearchType('drug')}
               className={`flex-1 py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
-                searchType === 'drug' 
+                isTabSelected && searchType === 'drug'
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-blue-100 hover:bg-blue-700/50'
               }`}
@@ -277,7 +283,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
               type="button"
               onClick={() => toggleSearchType('symptom')}
               className={`flex-1 py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
-                searchType === 'symptom' 
+                isTabSelected && searchType === 'symptom'
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-blue-100 hover:bg-blue-700/50'
               }`}
@@ -286,123 +292,126 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch, onReset, isLoadin
             </button>
           </div>
 
-          {/* Dynamic Content based on Search Type */}
-          {searchType === 'drug' ? (
-            // --- Drug Search UI ---
-            <div className="relative">
-              <div className="absolute left-3 top-3.5 text-slate-400">
-                <Search size={20} />
-              </div>
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="약 이름 (예: 타이레놀)"
-                className="w-full pl-10 pr-12 py-3 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
-              />
-              
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*"
-                onChange={handleImageUpload} 
-              />
-              
-              {/* Image Preview for Drug Search */}
-              {previewImage && (
-                <div className="relative inline-block mt-3">
-                  <img src={previewImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border-2 border-white" />
-                  <button 
-                    type="button" 
-                    onClick={clearImage}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md"
-                  >
-                    <X size={12} />
-                  </button>
+          {/* Dynamic Content based on Search Type — only shown after a tab is selected */}
+          {isTabSelected && (
+            searchType === 'drug' ? (
+              // --- Drug Search UI ---
+              <div className="relative">
+                <div className="absolute left-3 top-3.5 text-slate-400">
+                  <Search size={20} />
                 </div>
-              )}
-            </div>
-          ) : (
-            // --- Symptom Search UI ---
-            <div className="space-y-2">
-              {/* Custom Dropdown Implementation instead of datalist */}
-              {symptomPairs.map((pair, index) => (
-                <div key={pair.id} className="flex gap-2 animate-fadeIn z-10 relative">
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={pair.name}
-                      onChange={(e) => updateSymptomRow(pair.id, 'name', e.target.value)}
-                      onFocus={() => setActiveDropdownId(pair.id)}
-                      onBlur={() => setTimeout(() => setActiveDropdownId(null), 200)}
-                      placeholder="증상 (예: 두통)"
-                      className="w-full pl-4 pr-2 py-3 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
-                    />
-                    
-                    {/* Custom Dropdown List */}
-                    {activeDropdownId === pair.id && (
-                       <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 no-scrollbar animate-fadeIn">
-                         {SYMPTOMS_LIST.map((symptom) => (
-                           <div
-                             key={symptom}
-                             onClick={() => updateSymptomRow(pair.id, 'name', symptom)}
-                             className={`px-4 py-3 text-sm cursor-pointer hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-none text-slate-700 ${
-                               pair.name === symptom ? 'bg-blue-50 text-blue-600 font-bold' : ''
-                             }`}
-                           >
-                             {symptom}
-                           </div>
-                         ))}
-                       </div>
-                    )}
-                  </div>
-                  <div className="w-24">
-                    <select
-                      value={pair.severity}
-                      onChange={(e) => updateSymptomRow(pair.id, 'severity', e.target.value)}
-                      className="w-full h-full px-2 rounded-xl text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner text-sm font-medium"
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="약 이름 (예: 타이레놀)"
+                  className="w-full pl-10 pr-12 py-3 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
+                />
+                
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleImageUpload} 
+                />
+                
+                {/* Image Preview for Drug Search */}
+                {previewImage && (
+                  <div className="relative inline-block mt-3">
+                    <img src={previewImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border-2 border-white" />
+                    <button 
+                      type="button" 
+                      onClick={clearImage}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md"
                     >
-                      {SEVERITY_OPTIONS.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      <X size={12} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeSymptomRow(pair.id)}
-                    className="w-10 flex items-center justify-center bg-blue-700/30 text-blue-100 hover:bg-red-500 hover:text-white rounded-xl transition-colors"
-                    aria-label="Remove symptom"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              ))}
+                )}
+              </div>
+            ) : (
+              // --- Symptom Search UI ---
+              <div className="space-y-2">
+                {symptomPairs.map((pair) => (
+                  <div key={pair.id} className="flex gap-2 animate-fadeIn z-10 relative">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={pair.name}
+                        onChange={(e) => updateSymptomRow(pair.id, 'name', e.target.value)}
+                        onFocus={() => setActiveDropdownId(pair.id)}
+                        onBlur={() => setTimeout(() => setActiveDropdownId(null), 200)}
+                        placeholder="증상 (예: 두통)"
+                        className="w-full pl-4 pr-2 py-3 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
+                      />
+                      
+                      {/* Custom Dropdown List */}
+                      {activeDropdownId === pair.id && (
+                         <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 no-scrollbar animate-fadeIn">
+                           {SYMPTOMS_LIST.map((symptom) => (
+                             <div
+                               key={symptom}
+                               onClick={() => updateSymptomRow(pair.id, 'name', symptom)}
+                               className={`px-4 py-3 text-sm cursor-pointer hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-none text-slate-700 ${
+                                 pair.name === symptom ? 'bg-blue-50 text-blue-600 font-bold' : ''
+                               }`}
+                             >
+                               {symptom}
+                             </div>
+                           ))}
+                         </div>
+                      )}
+                    </div>
+                    <div className="w-24">
+                      <select
+                        value={pair.severity}
+                        onChange={(e) => updateSymptomRow(pair.id, 'severity', e.target.value)}
+                        className="w-full h-full px-2 rounded-xl text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner text-sm font-medium"
+                      >
+                        {SEVERITY_OPTIONS.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeSymptomRow(pair.id)}
+                      className="w-10 flex items-center justify-center bg-blue-700/30 text-blue-100 hover:bg-red-500 hover:text-white rounded-xl transition-colors"
+                      aria-label="Remove symptom"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
 
-              <button
-                type="button"
-                onClick={addSymptomRow}
-                className="w-full py-2 border-2 border-dashed border-blue-400 text-blue-100 rounded-xl hover:bg-blue-700/50 hover:border-blue-300 transition-colors flex items-center justify-center gap-2 text-sm font-bold"
-              >
-                <Plus size={16} /> 증상 추가
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={addSymptomRow}
+                  className="w-full py-2 border-2 border-dashed border-blue-400 text-blue-100 rounded-xl hover:bg-blue-700/50 hover:border-blue-300 transition-colors flex items-center justify-center gap-2 text-sm font-bold"
+                >
+                  <Plus size={16} /> 증상 추가
+                </button>
+              </div>
+            )
           )}
 
-          <button 
-            type="submit" 
-            disabled={isLoading || (searchType === 'drug' && !query && !previewImage) || (searchType === 'symptom' && symptomPairs.every(p => !p.name))}
-            onClick={() => console.log("[SearchHeader] submit button clicked", { disabled: isLoading || (searchType === 'drug' && !query && !previewImage) || (searchType === 'symptom' && symptomPairs.every(p => !p.name)) })}
-            className="w-full bg-white text-blue-600 font-bold py-3 rounded-xl hover:bg-blue-50 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-lg mt-4"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="animate-spin" /> 분석 중...
-              </>
-            ) : (
-              '약 찾기'
-            )}
-          </button>
+          {isTabSelected && (
+            <button 
+              type="submit" 
+              disabled={isLoading || (searchType === 'drug' && !query && !previewImage) || (searchType === 'symptom' && symptomPairs.every(p => !p.name))}
+              onClick={() => console.log("[SearchHeader] submit button clicked", { disabled: isLoading || (searchType === 'drug' && !query && !previewImage) || (searchType === 'symptom' && symptomPairs.every(p => !p.name)) })}
+              className="w-full bg-white text-blue-600 font-bold py-3 rounded-xl hover:bg-blue-50 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-lg mt-4"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin" /> 분석 중...
+                </>
+              ) : (
+                '약 찾기'
+              )}
+            </button>
+          )}
         </form>
       </div>
     </div>

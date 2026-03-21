@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastSearch, setLastSearch] = useState<SearchState | null>(null);
   const [searchType, setSearchType] = useState<SearchType>('drug');
+  const [isTabSelected, setIsTabSelected] = useState(false);
 
   const handleSearch = async (params: SearchState) => {
     console.log("[App] handleSearch called", params);
@@ -48,6 +49,7 @@ const App: React.FC = () => {
     setResult(null);
     setError(null);
     setLastSearch(null);
+    setIsTabSelected(false);
   };
 
   return (
@@ -61,6 +63,7 @@ const App: React.FC = () => {
           hasResult={!!result}
           lastSearch={lastSearch}
           onSearchTypeChange={setSearchType}
+          onTabSelected={setIsTabSelected}
         />
 
         <main className="flex-grow p-4 max-w-md mx-auto w-full">
@@ -73,17 +76,22 @@ const App: React.FC = () => {
 
           {!result && !loading && !error && (
             <div className="text-center py-4 text-slate-400">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="text-slate-300 w-8 h-8" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-600 mb-2">안전한 여행을 위한 메디링고</h2>
-              <p className="text-sm max-w-xs mx-auto">
-                위의 탭을 눌러 <strong>약 이름</strong> 혹은 <strong>증상</strong>으로<br/>현지 약을 검색해보세요.
-              </p>
-              
+              {/* 탭 미선택 시: 환영 메시지만 표시 */}
+              {!isTabSelected && (
+                <>
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mt-20 mb-4">
+                    <Globe className="text-slate-300 w-8 h-8" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-600 mb-2">안전한 여행을 위한 메디링고</h2>
+                  <p className="text-sm max-w-xs mx-auto">
+                    위의 탭을 눌러 <strong>약 이름</strong> 혹은 <strong>증상</strong>으로<br/>현지 약을 검색해보세요.
+                  </p>
+                </>
+              )}
 
-              {searchType === 'drug' ? (
-                <div className="mt-6">
+              {/* 탭 선택 후: 빠른 검색 버튼만 표시 */}
+              {isTabSelected && searchType === 'drug' && (
+                <div className="mt-2">
                   <p className="text-xs text-slate-400 mb-3">자주 찾는 약</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {['타이레놀', '판콜', '콜대원', '알보칠', '게보린', '이지엔식스', '판피린', '알레그라'].map((medicine) => (
@@ -104,8 +112,10 @@ const App: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="mt-6">
+              )}
+
+              {isTabSelected && searchType === 'symptom' && (
+                <div className="mt-2">
                   <p className="text-xs text-slate-400 mb-3">자주 찾는 증상</p>
                   <div className="flex flex-col gap-2 items-center">
                     {[
