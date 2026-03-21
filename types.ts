@@ -37,8 +37,6 @@ export interface RankingItem {
 export const COUNTRIES = [
   { code: 'KR', name: '대한민국', flag: '🇰🇷' },
   { code: 'US', name: '미국', flag: '🇺🇸' },
-  { code: 'CA', name: '캐나다', flag: '🇨🇦' },
-  { code: 'UK', name: '영국', flag: '🇬🇧' },
   { code: 'JP', name: '일본', flag: '🇯🇵' },
   { code: 'FR', name: '프랑스', flag: '🇫🇷' },
 ];
