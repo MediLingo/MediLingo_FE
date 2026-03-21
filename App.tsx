@@ -186,7 +186,11 @@ const App: React.FC = () => {
                     key={index} 
                     medicine={med} 
                     rank={index + 1} 
-                    countryCode={lastSearch?.targetCountry || 'US'} 
+                    countryCode={lastSearch?.targetCountry || 'US'}
+                    searchType={lastSearch?.searchType || 'drug'}
+                    query={lastSearch?.query || ''}
+                    symptoms={lastSearch?.symptoms}
+                    ingredients={result.ingredients}
                   />
                 ))}
               </div>

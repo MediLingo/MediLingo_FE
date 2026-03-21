@@ -1,12 +1,39 @@
 
 import React, { useState } from 'react';
-import { Medicine } from '../types';
-import { Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Medicine, SearchType, Symptom } from '../types';
+import { Check, ChevronDown, ChevronUp, AlertTriangle, Copy, CheckCheck } from 'lucide-react';
 
 interface MedicineCardProps {
   medicine: Medicine;
   rank: number;
   countryCode: string;
+  searchType: SearchType;
+  query: string;
+  symptoms?: Symptom[];
+  ingredients: string[];
+}
+
+function buildPharmacistSentence(
+  medicine: Medicine,
+  searchType: SearchType,
+  query: string,
+  ingredients: string[],
+  symptoms?: Symptom[]
+): string {
+  const ingredientList =
+    ingredients.length > 0
+      ? ingredients.join(', ')
+      : medicine.name;
+
+  if (searchType === 'drug') {
+    return `Hi, I'm not feeling well and need some medication. Back in my home country, I used to take something with these active ingredient(s): ${ingredientList}.\nI've been recommended ${medicine.localName} as a similar option here. Could you please advise?`;
+  } else {
+    const symptomParts =
+      symptoms && symptoms.length > 0
+        ? symptoms.map(s => `${s.name}${s.severity ? ` (${s.severity})` : ''}`).join(', ')
+        : query;
+    return `Hi, I'm not feeling well — I've been experiencing: ${symptomParts}. Back in my home country, I would take something with these active ingredient(s): ${ingredientList}.\nI've been recommended ${medicine.localName} as a similar option here. Could you please advise?`;
+  }
 }
 
 // ✅ baseURL + mock 토글 (Vite env)
@@ -20,9 +47,45 @@ const USE_MOCK =
 const joinUrl = (base: string, path: string) =>
   `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode }) => {
+const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode, searchType, query, symptoms, ingredients }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const pharmacistSentence = buildPharmacistSentence(medicine, searchType, query, ingredients, symptoms);
+
+  const handleCopy = async () => {
+    let success = false;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(pharmacistSentence);
+        success = true;
+      } catch {
+        // fall through to execCommand fallback
+      }
+    }
+
+    if (!success) {
+      const textarea = document.createElement('textarea');
+      textarea.value = pharmacistSentence;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        success = document.execCommand('copy');
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const toggleExpand = async () => {
     // Determine the next state
@@ -123,6 +186,33 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, rank, countryCode
             )}
             
             <div className="grid grid-cols-1 gap-4">
+              {/* 약국에 보여주세요 */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase text-slate-400 mb-1">약국에 보여주세요</h4>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-900 leading-relaxed break-words font-medium whitespace-pre-wrap">
+                    {pharmacistSentence}
+                  </p>
+                  <button
+                    onClick={handleCopy}
+                    className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    {copied ? (
+                      <>
+                        <CheckCheck size={13} />
+                        <span>복사됨</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} />
+                        <span>복사하기</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* 성분 설명 */}
               <div>
                 <h4 className="text-xs font-semibold uppercase text-slate-400 mb-1"> 성분 설명</h4>
                 <div className="flex items-start gap-1 text-sm text-emerald-700 bg-emerald-50 px-2 py-1 rounded">

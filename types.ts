@@ -5,6 +5,7 @@ export interface Medicine {
   localName: string; // The name in the target country's language
   matchReason: string; // Why is this a match?
   coverageWarning?: string; // Ingredients not covered by this product
+  activeIngredients?: string[]; // Active ingredient names (English)
   type: 'pill' | 'liquid' | 'cream' | 'patch' | 'other';
   imageUrl?: string; // Added to support API provided images
 }
